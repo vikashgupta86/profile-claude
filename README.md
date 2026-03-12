@@ -1,59 +1,130 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Portfolio — Laravel Blade Frontend
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+## Folder Structure
 
-## About Laravel
+```
+frontend/
+├── app/
+│   ├── Http/Controllers/
+│   │   └── PortfolioController.php    ← main controller (with dummy fallback)
+│   └── Models/
+│       └── Portfolio.php              ← owner profile model
+│
+├── routes/
+│   └── web.php                        ← public + admin routes
+│
+└── resources/views/
+    ├── layouts/
+    │   └── app.blade.php              ← master layout
+    │
+    ├── partials/                      ← reusable micro-pieces
+    │   ├── design-tokens.blade.php   ← CSS variables + reset (Lora + DM Sans + DM Mono)
+    │   ├── cursor.blade.php           ← custom ink-drop pointer cursor
+    │   ├── loader.blade.php           ← page loader
+    │   ├── toast.blade.php            ← notification toast
+    │   └── scripts.blade.php          ← all global JS
+    │
+    ├── sections/                      ← one file per page section
+    │   ├── navigation.blade.php
+    │   ├── mobile-drawer.blade.php
+    │   ├── hero.blade.php
+    │   ├── about.blade.php
+    │   ├── skills.blade.php
+    │   ├── experience.blade.php
+    │   ├── education.blade.php
+    │   ├── certifications.blade.php
+    │   ├── projects.blade.php
+    │   ├── contact.blade.php
+    │   └── footer.blade.php
+    │
+    └── portfolio.blade.php            ← page view (extends layouts.app)
+```
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+---
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## How Dynamic Data Works
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+`PortfolioController::index()` tries to load from DB first.
+If **no rows exist**, it falls back to **hardcoded dummy data** — so the
+site always looks great even before the admin panel is filled in.
 
-## Learning Laravel
+```php
+// Example: skills
+$groups = SkillGroup::with('skills')->orderBy('sort_order')->get();
+if ($groups->isEmpty()) {
+    return $this->dummySkillGroups();   // ← dummy fallback
+}
+```
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+All data is **cached for 1 hour** (`Cache::remember`).
+Clear it after admin saves: `Cache::flush()` or tag-based invalidation.
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+---
 
-## Laravel Sponsors
+## DB Models & Tables Needed
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+| Model           | Table             | Key Columns                                                     |
+|-----------------|-------------------|-----------------------------------------------------------------|
+| Portfolio       | portfolios        | name, title, bio, email, phone, github, linkedin, resume_url…  |
+| SkillGroup      | skill_groups      | emoji, category, sort_order                                     |
+| Skill           | skills            | skill_group_id, name, percent                                   |
+| Experience      | experiences       | role, company, location, period_label, is_current, bullets(json)|
+| Education       | education         | degree, institution, location, period_label, score, emoji       |
+| Certification   | certifications    | name, issuer, issuer_icon, icon, cert_url, sort_order           |
+| Project         | projects          | title, category, description, image_url, tags(json),           |
+|                 |                   | github_url, live_url, is_confidential, sort_order               |
 
-### Premium Partners
+---
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+## Fonts Used (Natural Editorial Aesthetic)
 
-## Contributing
+| Font        | Usage       | Style                        |
+|-------------|-------------|------------------------------|
+| Lora        | Headings    | Classic serif, warm & elegant|
+| DM Sans     | Body text   | Humanist, readable, natural  |
+| DM Mono     | Labels/code | Clean monospace for data     |
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+---
 
-## Code of Conduct
+## Custom Cursor
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+Changed from the old `cursor:none` + dot/ring to an **ink-drop pointer** style:
+- Tiny filled circle (dot) follows mouse instantly
+- Larger ring trails with spring easing
+- **Expands** on hover over links/buttons
+- **Morphs to blinking cursor bar** when focused on text inputs
+- Disabled automatically on touch devices
 
-## Security Vulnerabilities
+---
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+## Admin Panel Integration
 
-## License
+After saving any record in the admin:
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+```php
+// In your Admin controller's store/update/destroy:
+Cache::flush();
+// or selectively:
+Cache::forget('skill_groups');
+Cache::forget('projects');
+// etc.
+```
+
+---
+
+## Quick Start
+
+```bash
+# Copy into your Laravel project root
+cp -r frontend/* .
+
+# Install deps (already standard Laravel)
+composer install
+npm install && npm run dev
+
+# Run migrations
+php artisan migrate
+
+# Seed with your own data or leave empty (dummy data shows automatically)
+php artisan db:seed --class=PortfolioSeeder
+```
