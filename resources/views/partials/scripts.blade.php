@@ -27,11 +27,15 @@
 })();
 
 /* ── Loader ── */
-window.addEventListener('load', () => {
-  setTimeout(() => {
-    document.getElementById('loader')?.classList.add('out');
-  }, 2800);
-});
+// Robust loader close (handles slow resources or JS timing)
+(function initLoader() {
+  const loader = document.getElementById('loader');
+  if (!loader) return;
+  const hide = () => loader.classList.add('out');
+  window.addEventListener('load', () => setTimeout(hide, 800));
+  document.addEventListener('DOMContentLoaded', () => setTimeout(hide, 1200));
+  setTimeout(hide, 4000);
+})();
 
 /* ── Navigation: scroll state + active link ── */
 (function initNav() {
@@ -129,15 +133,33 @@ window.addEventListener('load', () => {
 
 /* ── Project Filter ── */
 (function initFilter() {
-  document.querySelectorAll('.proj-filter').forEach(btn => {
+  const legacyBtns = document.querySelectorAll('.pf');
+  const modernBtns = document.querySelectorAll('.proj-filter');
+
+  if (legacyBtns.length) {
+    legacyBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        legacyBtns.forEach(b => b.classList.remove('on'));
+        btn.classList.add('on');
+        const filter = btn.dataset.f;
+        document.querySelectorAll('.proj-card').forEach(card => {
+          const show = filter === 'all' || card.dataset.cat === filter;
+          card.style.display = show ? '' : 'none';
+          if (show) setTimeout(() => card.classList.add('in'), 10);
+        });
+      });
+    });
+    return;
+  }
+
+  modernBtns.forEach(btn => {
     btn.addEventListener('click', () => {
-      document.querySelectorAll('.proj-filter').forEach(b => b.classList.remove('active'));
+      modernBtns.forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       const filter = btn.dataset.filter;
       document.querySelectorAll('.project-card').forEach(card => {
         const show = filter === 'all' || card.dataset.category === filter;
         card.style.display = show ? '' : 'none';
-        // Re-trigger reveal if newly shown
         if (show) setTimeout(() => card.classList.add('in'), 10);
       });
     });
